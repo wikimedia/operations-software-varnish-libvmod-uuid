@@ -104,8 +104,9 @@ _uuid(struct sess *sp, int utype, ...) {
    if (uuid_str == NULL)
       return(NULL);
 
+   assert(strlen(uuid_str) == UUID_LEN_STR);
    u = WS_Reserve(sp->wrk->ws, 0);     // Reserve some work space 
-   if (sizeof(uuid_str) > u) {
+   if (u < UUID_LEN_STR + 1) {
       // No space, reset and leave 
       WS_Release(sp->wrk->ws, 0);
       return(NULL);
@@ -114,15 +115,13 @@ _uuid(struct sess *sp, int utype, ...) {
    p = sp->wrk->ws->f;                 // Front of workspace area 
 
    strcpy(p, uuid_str);
-   // keep track of how much we actually used
-   v += strlen(uuid_str);
    // free up the uuid string once it's copied in place
    if(uuid_str){
       free(uuid_str);
    }
 
    // Update work space with what we've used 
-   WS_Release(sp->wrk->ws, v);
+   WS_Release(sp->wrk->ws, UUID_LEN_STR + 1);
    if (DEBUG)
       debug("uuid: %s", p);
    return(p);
