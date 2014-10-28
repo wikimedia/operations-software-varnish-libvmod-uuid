@@ -35,7 +35,9 @@
 
 #include "vcc_if.h"
 
-void
+#define DEBUG 0
+
+static void
 debug(const char *fmt, ...){
    va_list ap;
    va_start(ap, fmt);
@@ -43,31 +45,64 @@ debug(const char *fmt, ...){
    va_end(ap);
 }
 
-char 
-*uuid_v1(void) {
-    uuid_t *uuid;
-    char *str;
+#define UUID_CALL(RC,SP,CALL,UUID,STR)                                  \
+   do {                                                                 \
+     if (((RC) = (CALL)) != UUID_RC_OK) {                               \
+        WSP((SP), SLT_VCL_error, "vmod uuid error %d: %s", (RC),        \
+            uuid_error(RC));                                            \
+        if ((UUID) != NULL)                                             \
+           uuid_destroy(UUID);                                          \
+        if ((STR) != NULL)                                              \
+           free(STR);                                                   \
+        return(NULL);                                                   \
+     }                                                                  \
+   } while(0)
+   
+static char *
+uuid(struct sess *sp, int utype, va_list ap) {
+    uuid_t *uuid = NULL, *uuid_ns;
+    uuid_rc_t rc;
+    char *str = NULL, *ns, *name;
 
-    uuid_create(&uuid);
-    uuid_make(uuid, UUID_MAKE_V1);
+    if (utype == UUID_MAKE_V3 || utype == UUID_MAKE_V5) {
+       UUID_CALL(rc, sp, uuid_create(&uuid_ns), uuid, str);
+       ns = (char *) va_arg(ap, char *);
+       AN(ns);
+       name = (char *) va_arg(ap, char *);
+       AN(name);
+       if (uuid_load(uuid_ns, ns) != UUID_RC_OK
+           && uuid_import(uuid_ns, UUID_FMT_STR, (const void *) ns, strlen(ns))
+              != UUID_RC_OK) {
+          UUID_CALL(rc, sp, uuid_destroy(uuid_ns), uuid, str);
+          return(NULL);
+       }
+    }
+
+    UUID_CALL(rc, sp, uuid_create(&uuid), uuid, str);
+    UUID_CALL(rc, sp, uuid_make(uuid, utype, uuid_ns, name), uuid, str);
     str = NULL;
-    uuid_export(uuid, UUID_FMT_STR, &str, NULL);
-    uuid_destroy(uuid);
-    //debug("uuid: %s", str);
+    UUID_CALL(rc, sp, uuid_export(uuid, UUID_FMT_STR, &str, NULL), uuid, str);
+    UUID_CALL(rc, sp, uuid_destroy(uuid), uuid, str);
+    if (DEBUG)
+       debug("uuid: %s", str);
     return(str);
 }
 
-int
-init_function(struct vmod_priv *priv, const struct VCL_conf *conf){
-   return(0);
-}
-
-const char *
-vmod_uuid(struct sess *sp, struct vmod_priv *pv){
+static const char *
+_uuid(struct sess *sp, int utype, ...) {
    char *p;
    unsigned u, v;
+   va_list ap;
 
-   char *uuid_str = uuid_v1();
+   CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
+   assert(utype == UUID_MAKE_V1 || utype == UUID_MAKE_V3
+          || utype == UUID_MAKE_V4 || utype == UUID_MAKE_V5);
+
+   va_start(ap, utype);
+   char *uuid_str = uuid(sp, utype, ap);
+   va_end(ap);
+   if (uuid_str == NULL)
+      return(NULL);
 
    u = WS_Reserve(sp->wrk->ws, 0);     // Reserve some work space 
    if (sizeof(uuid_str) > u) {
@@ -78,18 +113,42 @@ vmod_uuid(struct sess *sp, struct vmod_priv *pv){
 
    p = sp->wrk->ws->f;                 // Front of workspace area 
 
-   strncpy(p, uuid_str, 37);
+   strcpy(p, uuid_str);
+   // keep track of how much we actually used
+   v += strlen(uuid_str);
    // free up the uuid string once it's copied in place
    if(uuid_str){
       free(uuid_str);
    }
 
-   // keep track of how much we actually used
-   v+=37;
-
    // Update work space with what we've used 
    WS_Release(sp->wrk->ws, v);
-//   debug("uuid: %s", p);
+   if (DEBUG)
+      debug("uuid: %s", p);
    return(p);
 }
 
+const char *
+vmod_uuid_v1(struct sess *sp) {
+   return _uuid(sp, UUID_MAKE_V1);
+}
+
+const char *
+vmod_uuid_v3(struct sess *sp, const char *ns, const char *name) {
+   return _uuid(sp, UUID_MAKE_V3, ns, name);
+}
+
+const char *
+vmod_uuid_v4(struct sess *sp) {
+   return _uuid(sp, UUID_MAKE_V4);
+}
+
+const char *
+vmod_uuid_v5(struct sess *sp, const char *ns, const char *name) {
+   return _uuid(sp, UUID_MAKE_V5, ns, name);
+}
+
+const char *
+vmod_uuid(struct sess *sp) {
+   return vmod_uuid_v1(sp);
+}

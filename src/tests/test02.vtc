@@ -1,0 +1,112 @@
+varnishtest "Test the various uuid versions"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+   import uuid from "${vmod_topbuild}/src/.libs/libvmod_uuid.so";
+
+   sub vcl_deliver {
+      if (uuid.uuid() ~
+          "^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$") {
+         set resp.http.uuid = "OK";
+      }
+
+      if (uuid.uuid_v1() ~
+          "^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v1 = "OK";
+      }
+
+      # Known v3 value from RFC 4122 Errata ID 1352      
+      if (uuid.uuid_v3("ns:DNS", "www.widgets.com") ==
+          "3d813cbb-47fb-32ba-91df-831e1593ac29") {
+         set resp.http.uuid_v3_dns_widgets = "OK";
+      }
+      if (uuid.uuid_v3("nil", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v3_nil_widgets = "OK";
+      }
+      if (uuid.uuid_v3("ns:URL", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v3_url_widgets = "OK";
+      }
+      if (uuid.uuid_v3("ns:OID", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v3_oid_widgets = "OK";
+      }
+      if (uuid.uuid_v3("ns:X500", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v3_x500_widgets = "OK";
+      }
+      if (uuid.uuid_v3("379b0b72-fcde-4276-96ff-94fe3066326a",
+                       "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v3_uuid_widgets = "OK";
+      }
+      if (uuid.uuid_v3("illegal", "www.widgets.com")) {
+         set resp.http.uuid_v3_illegal_ns = "NotOK";
+      }
+
+      if (uuid.uuid_v4() ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v4 = "OK";
+      }
+
+      # Known v5 value from ruby gem UUIDTools test data
+      if (uuid.uuid_v5("ns:DNS", "www.widgets.com") ==
+          "21f7f8de-8051-5b89-8680-0195ef798b6a") {
+         set resp.http.uuid_v5_dns_widgets = "OK";
+      }
+      if (uuid.uuid_v5("nil", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v5_nil_widgets = "OK";
+      }
+      if (uuid.uuid_v5("ns:URL", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v5_url_widgets = "OK";
+      }
+      if (uuid.uuid_v5("ns:OID", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v5_oid_widgets = "OK";
+      }
+      if (uuid.uuid_v5("ns:X500", "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v5_x500_widgets = "OK";
+      }
+      if (uuid.uuid_v5("379b0b72-fcde-4276-96ff-94fe3066326a",
+                       "www.widgets.com") ~
+      "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$") {
+         set resp.http.uuid_v5_uuid_widgets = "OK";
+      }
+      if (uuid.uuid_v5("illegal", "www.widgets.com")) {
+         set resp.http.uuid_v5_illegal_ns = "NotOK";
+      }
+   }
+} -start
+
+client c1 {
+   txreq -url "/"
+   rxresp
+   expect resp.http.uuid == "OK"
+   expect resp.http.uuid_v1 == "OK"
+   expect resp.http.uuid_v3_dns_widgets == "OK"
+   expect resp.http.uuid_v3_nil_widgets == "OK"
+   expect resp.http.uuid_v3_url_widgets == "OK"
+   expect resp.http.uuid_v3_oid_widgets == "OK"
+   expect resp.http.uuid_v3_x500_widgets == "OK"
+   expect resp.http.uuid_v3_uuid_widgets == "OK"
+   expect resp.http.uuid_v3_illegal_ns == <undef>
+   expect resp.http.uuid_v4 == "OK"
+   expect resp.http.uuid_v5_dns_widgets == "OK"
+   expect resp.http.uuid_v5_nil_widgets == "OK"
+   expect resp.http.uuid_v5_url_widgets == "OK"
+   expect resp.http.uuid_v5_oid_widgets == "OK"
+   expect resp.http.uuid_v5_x500_widgets == "OK"
+   expect resp.http.uuid_v5_uuid_widgets == "OK"
+   expect resp.http.uuid_v5_illegal_ns == <undef>
+}
+
+client c1 -run
+

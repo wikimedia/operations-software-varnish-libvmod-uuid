@@ -1,2 +1,6 @@
 Module uuid
-Function STRING uuid(PRIV_CALL)
+Function STRING uuid()
+Function STRING uuid_v1()
+Function STRING uuid_v3(STRING, STRING)
+Function STRING uuid_v4()
+Function STRING uuid_v5(STRING, STRING)
