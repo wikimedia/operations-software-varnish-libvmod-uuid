@@ -58,8 +58,8 @@ debug(const char *fmt, ...){
      }                                                                  \
    } while(0)
    
-static char *
-uuid(struct sess *sp, int utype, va_list ap) {
+static inline char *
+mkuuid(struct sess *sp, int utype, va_list ap) {
     uuid_t *uuid = NULL, *uuid_ns;
     uuid_rc_t rc;
     char *str = NULL, *ns, *name;
@@ -91,7 +91,7 @@ uuid(struct sess *sp, int utype, va_list ap) {
 static const char *
 _uuid(struct sess *sp, int utype, ...) {
    char *p;
-   unsigned u, v;
+   unsigned u;
    va_list ap;
 
    CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
@@ -99,7 +99,7 @@ _uuid(struct sess *sp, int utype, ...) {
           || utype == UUID_MAKE_V4 || utype == UUID_MAKE_V5);
 
    va_start(ap, utype);
-   char *uuid_str = uuid(sp, utype, ap);
+   char *uuid_str = mkuuid(sp, utype, ap);
    va_end(ap);
    if (uuid_str == NULL)
       return(NULL);
