@@ -45,27 +45,28 @@ debug(const char *fmt, ...){
    va_end(ap);
 }
 
-#define UUID_CALL(RC,SP,CALL,UUID,STR)                                  \
+#define UUID_CALL(RC,SP,CALL,UUID,UUIDNS)                               \
    do {                                                                 \
      if (((RC) = (CALL)) != UUID_RC_OK) {                               \
         WSP((SP), SLT_VCL_error, "vmod uuid error %d: %s", (RC),        \
             uuid_error(RC));                                            \
         if ((UUID) != NULL)                                             \
            uuid_destroy(UUID);                                          \
-        if ((STR) != NULL)                                              \
-           free(STR);                                                   \
-        return(NULL);                                                   \
+        if ((UUIDNS) != NULL)                                           \
+           uuid_destroy(UUIDNS);                                        \
+        return(-1);                                                     \
      }                                                                  \
    } while(0)
    
-static inline char *
-mkuuid(struct sess *sp, int utype, va_list ap) {
-    uuid_t *uuid = NULL, *uuid_ns;
+static inline int
+mkuuid(struct sess *sp, int utype, const char *str, va_list ap) {
+    uuid_t *uuid = NULL, *uuid_ns = NULL;
     uuid_rc_t rc;
-    char *str = NULL, *ns, *name;
+    char *ns, *name;
+    size_t len = UUID_LEN_STR + 1;
 
     if (utype == UUID_MAKE_V3 || utype == UUID_MAKE_V5) {
-       UUID_CALL(rc, sp, uuid_create(&uuid_ns), uuid, str);
+       UUID_CALL(rc, sp, uuid_create(&uuid_ns), uuid, uuid_ns);
        ns = (char *) va_arg(ap, char *);
        AN(ns);
        name = (char *) va_arg(ap, char *);
@@ -73,52 +74,53 @@ mkuuid(struct sess *sp, int utype, va_list ap) {
        if (uuid_load(uuid_ns, ns) != UUID_RC_OK
            && uuid_import(uuid_ns, UUID_FMT_STR, (const void *) ns, strlen(ns))
               != UUID_RC_OK) {
-          UUID_CALL(rc, sp, uuid_destroy(uuid_ns), uuid, str);
-          return(NULL);
+          UUID_CALL(rc, sp, uuid_destroy(uuid_ns), uuid, uuid_ns);
+          return(-1);
        }
+       AN(uuid_ns);
     }
 
-    UUID_CALL(rc, sp, uuid_create(&uuid), uuid, str);
-    UUID_CALL(rc, sp, uuid_make(uuid, utype, uuid_ns, name), uuid, str);
-    str = NULL;
-    UUID_CALL(rc, sp, uuid_export(uuid, UUID_FMT_STR, &str, NULL), uuid, str);
-    UUID_CALL(rc, sp, uuid_destroy(uuid), uuid, str);
+    UUID_CALL(rc, sp, uuid_create(&uuid), uuid, uuid_ns);
+    UUID_CALL(rc, sp, uuid_make(uuid, utype, uuid_ns, name), uuid, uuid_ns);
+    UUID_CALL(rc, sp, uuid_export(uuid, UUID_FMT_STR, &str, &len), uuid,
+              uuid_ns);
+    assert(len == UUID_LEN_STR + 1);
+    UUID_CALL(rc, sp, uuid_destroy(uuid), uuid, uuid_ns);
+    if (uuid_ns != NULL)
+       uuid_destroy(uuid_ns);
     if (DEBUG)
        debug("uuid: %s", str);
-    return(str);
+    return(0);
 }
 
-static const char *
+static inline const char *
 _uuid(struct sess *sp, int utype, ...) {
-   char *p;
+   char *p, uuid_str[UUID_LEN_STR + 1];
    unsigned u;
    va_list ap;
+   int ret;
 
    CHECK_OBJ_NOTNULL(sp, SESS_MAGIC);
    assert(utype == UUID_MAKE_V1 || utype == UUID_MAKE_V3
           || utype == UUID_MAKE_V4 || utype == UUID_MAKE_V5);
 
    va_start(ap, utype);
-   char *uuid_str = mkuuid(sp, utype, ap);
+   ret = mkuuid(sp, utype, uuid_str, ap);
    va_end(ap);
-   if (uuid_str == NULL)
+   if (ret != 0)
       return(NULL);
 
    assert(strlen(uuid_str) == UUID_LEN_STR);
    u = WS_Reserve(sp->wrk->ws, 0);     // Reserve some work space 
    if (u < UUID_LEN_STR + 1) {
-      // No space, reset and leave 
+      // No space, reset and leave
+      WSP(sp, SLT_VCL_error, "vmod uuid error: insufficient workspace");
       WS_Release(sp->wrk->ws, 0);
       return(NULL);
    }
 
    p = sp->wrk->ws->f;                 // Front of workspace area 
-
    strcpy(p, uuid_str);
-   // free up the uuid string once it's copied in place
-   if(uuid_str){
-      free(uuid_str);
-   }
 
    // Update work space with what we've used 
    WS_Release(sp->wrk->ws, UUID_LEN_STR + 1);
