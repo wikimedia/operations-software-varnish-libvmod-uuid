@@ -22,28 +22,14 @@
 **
 */
 
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <uuid.h>
-
 #include <stdarg.h>
-#include <syslog.h>
 
 #include "vrt.h"
 #include "cache/cache.h"
 
 #include "vcc_if.h"
-
-#define DEBUG 0
-
-static void
-debug(const char *fmt, ...){
-   va_list ap;
-   va_start(ap, fmt);
-   vsyslog(LOG_DAEMON|LOG_INFO, fmt, ap);
-   va_end(ap);
-}
 
 #define UUID_CALL(RC,CTX,CALL,UUID,UUIDNS)                              \
    do {                                                                 \
@@ -88,8 +74,6 @@ mkuuid(const struct vrt_ctx *ctx, int utype, const char *str, va_list ap) {
     UUID_CALL(rc, ctx, uuid_destroy(uuid), uuid, uuid_ns);
     if (uuid_ns != NULL)
        uuid_destroy(uuid_ns);
-    if (DEBUG)
-       debug("uuid: %s", str);
     return(0);
 }
 
