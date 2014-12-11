@@ -6,8 +6,8 @@ vmod_uuid
 Varnish UUID Module
 ----------------------
 
-:Author: Mitchell Broome
-:Date: 2013-08-01
+:Author: Mitchell Broome, Geoff Simmons
+:Date: 2014-12-11
 :Version: 1.0
 :Manual section: 3
 
@@ -135,7 +135,7 @@ DEPENDENCIES
 
 Libvmod-uuid requires the OSSP uuid library to generate uuids.  It
 is available at http://www.ossp.org/pkg/lib/uuid/ or possibly as a
-prepackaged library from your linux distribution.  i
+prepackaged library from your linux distribution.
 
 In the case of Redhat/Fedora/CentOS, the rpm is named uuid.  Ensure
 you install the rpms with the following command::
@@ -146,30 +146,21 @@ you install the rpms with the following command::
 INSTALLATION
 ============
 
-This is a basic implementation to generate a uuid for use in varnish.
+The installation process is standard for a Varnish 4 VMOD -- build the
+VMOD on a system where an instance of Varnish 4 is installed, and the
+auto-tools will attempt to locate the Varnish instance, and then pull
+in libraries and other support files from there.
 
-The source tree is based on autotools to configure the building, and
-does also have the necessary bits in place to do functional unit tests
-using the varnishtest tool.
+Quick start
+-----------
 
-Usage::
+This sequence should be enough in typical setups:
 
- ./autogen.sh
- ./configure VARNISHSRC=DIR [VMODDIR=DIR]
-
-`VARNISHSRC` is the directory of the Varnish source tree for which to
-compile your vmod. Both the `VARNISHSRC` and `VARNISHSRC/include`
-will be added to the include search paths for your module.
-
-Optionally you can also set the vmod install directory by adding
-`VMODDIR=DIR` (defaults to the pkg-config discovered directory from your
-Varnish installation).
-
-Make targets:
-
-* make - builds the vmod
-* make install - installs your vmod in `VMODDIR`
-* make check - runs the unit tests in ``src/tests/*.vtc``
+1. ``./autogen.sh``  (for git-installation)
+2. ``./configure``
+3. ``make``
+4. ``make check`` (regression tests)
+5. ``make install`` (may require root: sudo make install)
 
 In your VCL you could then use this vmod along the following lines::
         
@@ -180,6 +171,53 @@ In your VCL you could then use this vmod along the following lines::
                 set req.http.X-Flow-ID = "cache-" + uuid.uuid();
         }
 
+Alternative configs
+-------------------
+
+As with Varnish itself, you can set additional flags and macros in the
+``configure`` step, and/or define environment variables to affect the
+build config.
+
+For example, if you are building the VMOD against a Varnish instance
+with a non-standard installation prefix, then set these env variables
+before running ``configure``:
+
+* PREFIX=/path/to/varnish/install/prefix
+* export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+* export ACLOCAL_PATH=$PREFIX/share/aclocal
+* export PATH=$PREFIX/bin:$PREFIX/sbin:$PATH
+
+``configure`` must locate the ``varnishtest`` and ``varnishd``
+binaries so that ``make check`` can be run. Usually it should be able
+to find them, but if necessary you can set the variables
+``VARNISHTEST`` and/or ``VARNISHD`` with the full paths.
+
+For developers
+--------------
+
+As with Varnish, you can use these ``configure`` options for stricter
+compiling:
+
+* ``--enable-developer-warnings``
+* ``--enable-extra-developer-warnings`` (for GCC 4)
+* ``--enable-werror``
+
+The VMOD must always build successfully with these options enabled.
+
+Also as with Varnish, you can add ``--enable-debugging-symbols``, so
+that the VMOD's symbols are available to debuggers, in core dumps and
+so forth.
+
+HISTORY
+=======
+
+* Version 1.0: Varnish 4 version, supporting all UUID variants
+  by Geoffrey Simmons <geoff@uplex.de>, UPLEX Nils Goroll Systemoptimierung
+  for Otto GmbH & KG
+  https://github.com/otto-de/libvmod-uuid
+
+* Version 0.1: Initial Varnish 3 version, by Mitchell Broome of Sharecare
+  https://github.com/Sharecare/libvmod-uuid
 
 COPYRIGHT
 =========

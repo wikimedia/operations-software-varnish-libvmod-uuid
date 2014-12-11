@@ -13,13 +13,17 @@
 **   See the License for the specific language governing permissions and
 **   limitations under the License.
 **
-**
+** Original Varnish 3 version:
 ** vmod_uuid.c  Generate a UUID for use by varnish
 ** Date:        08/23/2013
 ** By:          Mitchell Broome <mbroome@sharecare.com>
 ** Version:     0.1
 **
 **
+** Varnish 4 version, supporting all UUID variants:
+** Geoffrey Simmons <geoff@uplex.de>, UPLEX Nils Goroll Systemoptimierung
+** for Otto GmbH & KG
+** Version 1.0
 */
 
 #include <string.h>
