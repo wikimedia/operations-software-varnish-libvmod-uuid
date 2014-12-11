@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
-AC_COPYRIGHT([Copyright (c) 2011 Varnish Software AS])
-AC_INIT([libvmod-uuid], [trunk])
+AC_COPYRIGHT([Copyright (c) 2013 Sharecare, Inc.])
+AC_INIT([libvmod-uuid], [1.0])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_uuid.vcc)
 AM_CONFIG_HEADER(config.h)
@@ -36,35 +36,32 @@ PKG_PROG_PKG_CONFIG
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([sys/stdlib.h])
+AC_CHECK_HEADERS([stdio.h])
+AC_CHECK_HEADERS([string.h])
+AC_CHECK_HEADERS([stdlib.h])
+AC_CHECK_HEADERS([uuid.h])
+AC_CHECK_HEADERS([stdarg.h])
+AC_CHECK_HEADERS([syslog.h])
 
 # Check for python
 AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
 
-# Varnish source tree
-AC_ARG_VAR([VARNISHSRC], [path to Varnish source tree (mandatory)])
-if test "x$VARNISHSRC" = x; then
-	AC_MSG_ERROR([No Varnish source tree specified])
+# Varnish include files tree
+VARNISH_VMOD_INCLUDES
+VARNISH_VMOD_DIR
+VARNISH_VMODTOOL
+
+# Check paths to varnishd and varnishtest
+AC_ARG_VAR([VARNISHTEST], [path to varnishtest (mandatory for make check)])
+AC_ARG_VAR([VARNISHD], [path to varnishd (mandatory for make check)])
+AC_PATH_PROG([VARNISHTEST], [varnishtest])
+AC_PATH_PROG([VARNISHD], [varnishd], [/bin/false],
+             [${PATH}${PATH_SEPARATOR}/usr/local/sbin${PATH_SEPARATOR}/usr/sbin])
+if test "x$VARNISHD" = x; then
+   AC_MSG_FAILURE([Can't locate varnishd])
 fi
-VARNISHSRC=`cd $VARNISHSRC && pwd`
-AC_CHECK_FILE([$VARNISHSRC/include/varnishapi.h],
-	[],
-	[AC_MSG_FAILURE(["$VARNISHSRC" is not a Varnish source directory])]
-)
-
-# Check that varnishtest is built in the varnish source directory
-AC_CHECK_FILE([$VARNISHSRC/bin/varnishtest/varnishtest],
-	[],
-	[AC_MSG_FAILURE([Can't find "$VARNISHSRC/bin/varnishtest/varnishtest". Please build your varnish source directory])]
-)
-
-# vmod installation dir
-AC_ARG_VAR([VMODDIR], [vmod installation directory @<:@LIBDIR/varnish/vmods@:>@])
-if test "x$VMODDIR" = x; then
-	VMODDIR=`pkg-config --variable=vmoddir varnishapi`
-	if test "x$VMODDIR" = x; then
-		AC_MSG_FAILURE([Can't determine vmod installation directory])
-	fi
+if test "x$VARNISHTEST" = x; then
+   AC_MSG_FAILURE([Can't locate varnishtest])
 fi
 
 # This corresponds to FreeBSD's WARNS level 6
