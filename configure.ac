@@ -64,6 +64,8 @@ if test "x$VARNISHTEST" = x; then
    AC_MSG_FAILURE([Can't locate varnishtest])
 fi
 
+PKG_CHECK_MODULES([OSSP], [ossp-uuid])
+
 # This corresponds to FreeBSD's WARNS level 6
 DEVELOPER_CFLAGS="-Wall -Wstrict-prototypes \
 -Wmissing-prototypes \

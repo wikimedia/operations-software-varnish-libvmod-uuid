@@ -3,7 +3,8 @@ AM_CPPFLAGS = @VMOD_INCLUDES@
 vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_uuid.la
 
-libvmod_uuid_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
+libvmod_uuid_la_LDFLAGS = -module -export-dynamic -avoid-version -shared \
+	@OSSP_LIBS@
 
 libvmod_uuid_la_SOURCES = \
 	vcc_if.c \
