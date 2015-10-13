@@ -1,6 +1,6 @@
 varnishtest "Test the various uuid versions"
 
-server s1 {
+server s1 -repeat 2 {
        rxreq
        txresp
 } -start
@@ -110,3 +110,5 @@ client c1 {
 
 client c1 -run
 
+# Run a second time to check PRIV_TASK scope
+client c1 -run
