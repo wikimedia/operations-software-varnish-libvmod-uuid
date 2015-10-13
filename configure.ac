@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
 AC_COPYRIGHT([Copyright (c) 2013 Sharecare, Inc.])
-AC_INIT([libvmod-uuid], [1.0])
+AC_INIT([libvmod-uuid], [1.1])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_uuid.vcc)
 AM_CONFIG_HEADER(config.h)

@@ -7,8 +7,8 @@ Varnish UUID Module
 ----------------------
 
 :Author: Mitchell Broome, Geoff Simmons
-:Date: 2014-12-11
-:Version: 1.0
+:Date: 2015-10-13
+:Version: 1.1
 :Manual section: 3
 
 SYNOPSIS
@@ -210,6 +210,10 @@ so forth.
 
 HISTORY
 =======
+
+* Version 1.1: requires Varnish 4.1, creates internal UUID objects
+  only once during a client or backend context and re-uses them for
+  subsequent calls.
 
 * Version 1.0: Varnish 4 version, supporting all UUID variants
   by Geoffrey Simmons <geoff@uplex.de>, UPLEX Nils Goroll Systemoptimierung
