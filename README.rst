@@ -8,7 +8,7 @@ Varnish UUID Module
 
 :Author: Mitchell Broome, Geoff Simmons
 :Date: 2015-10-13
-:Version: 1.2
+:Version: 1.1
 :Manual section: 3
 
 SYNOPSIS
