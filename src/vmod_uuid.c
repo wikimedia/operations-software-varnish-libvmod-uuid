@@ -50,7 +50,7 @@ mkuuid(VRT_CTX, int utype, uuid_t *uuid, const char *str, va_list ap)
 {
 	uuid_t *uuid_ns = NULL;
 	uuid_rc_t rc;
-	char *ns, *name;
+	char *ns = NULL, *name = NULL;
 	size_t len = UUID_LEN_STR + 1;
 
 	if (utype == UUID_MAKE_V3 || utype == UUID_MAKE_V5) {
