@@ -142,7 +142,8 @@ you install the rpms with the following command::
 
    yum install -y uuid uuid-devel
 
-This version of the VMOD requires Varnish 5.0.0.
+This version of the VMOD requires Varnish since version 5.0.0, and has
+been tested against versions through 5.1.2.
 
 INSTALLATION
 ============
@@ -212,7 +213,7 @@ so forth.
 HISTORY
 =======
 
-* Verison 1.2: compatible with Varnish 5.0
+* Verison 1.2: compatible with Varnish since 5.0.0
 
 * Version 1.1: requires Varnish 4.1, creates internal UUID objects
   only once during a client or backend context and re-uses them for
