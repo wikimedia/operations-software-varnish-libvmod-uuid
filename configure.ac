@@ -46,23 +46,22 @@ AC_CHECK_HEADERS([syslog.h])
 # Check for python
 AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
 
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.8])
+PKG_CHECK_MODULES([libvarnishapi], [varnishapi])
+PKG_CHECK_VAR([LIBVARNISHAPI_DATAROOTDIR], [varnishapi], [datarootdir])
+PKG_CHECK_VAR([LIBVARNISHAPI_BINDIR], [varnishapi], [bindir])
+PKG_CHECK_VAR([LIBVARNISHAPI_SBINDIR], [varnishapi], [sbindir])
+AC_SUBST([LIBVARNISHAPI_DATAROOTDIR])
+
 # Varnish include files tree
 VARNISH_VMOD_INCLUDES
 VARNISH_VMOD_DIR
 VARNISH_VMODTOOL
 
-# Check paths to varnishd and varnishtest
-AC_ARG_VAR([VARNISHTEST], [path to varnishtest (mandatory for make check)])
-AC_ARG_VAR([VARNISHD], [path to varnishd (mandatory for make check)])
-AC_PATH_PROG([VARNISHTEST], [varnishtest])
-AC_PATH_PROG([VARNISHD], [varnishd], [/bin/false],
-             [${PATH}${PATH_SEPARATOR}/usr/local/sbin${PATH_SEPARATOR}/usr/sbin])
-if test "x$VARNISHD" = x; then
-   AC_MSG_FAILURE([Can't locate varnishd])
-fi
-if test "x$VARNISHTEST" = x; then
-   AC_MSG_FAILURE([Can't locate varnishtest])
-fi
+AC_PATH_PROG([VARNISHTEST], [varnishtest], [],
+    [$LIBVARNISHAPI_BINDIR:$LIBVARNISHAPI_SBINDIR:$PATH])
+AC_PATH_PROG([VARNISHD], [varnishd], [],
+    [$LIBVARNISHAPI_SBINDIR:$LIBVARNISHAPI_BINDIR:$PATH])
 
 PKG_CHECK_MODULES([OSSP], [ossp-uuid])
 

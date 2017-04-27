@@ -10,7 +10,7 @@ libvmod_uuid_la_SOURCES = \
 	vcc_if.c \
 	vcc_if.h \
 	vmod_uuid.c
-	
+
 vcc_if.c vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_uuid.vcc
 	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_uuid.vcc
 
@@ -18,7 +18,8 @@ VMOD_TESTS = tests/*.vtc
 .PHONY: $(VMOD_TESTS)
 
 tests/*.vtc:
-	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvmod_topbuild=$(abs_top_builddir) $@
+	PATH=@LIBVARNISHAPI_SBINDIR@:$$PATH \
+	@VARNISHTEST@ -Dvmod_topbuild=$(abs_top_builddir) $@
 
 check: $(VMOD_TESTS)
 
