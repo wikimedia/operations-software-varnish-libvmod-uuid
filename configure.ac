@@ -46,7 +46,6 @@ AC_CHECK_HEADERS([syslog.h])
 # Check for python
 AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
 
-PKG_CHECK_MODULES([CHECK], [check >= 0.9.8])
 PKG_CHECK_MODULES([libvarnishapi], [varnishapi])
 PKG_CHECK_VAR([LIBVARNISHAPI_DATAROOTDIR], [varnishapi], [datarootdir])
 PKG_CHECK_VAR([LIBVARNISHAPI_BINDIR], [varnishapi], [bindir])
