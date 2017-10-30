@@ -50,14 +50,13 @@ AC_CONFIG_FILES([
 
 AM_CONDITIONAL(HAVE_RST2MAN, [test "x$RST2MAN" != "xno"])
 
-# Checks for header files.
+# Checks for C sources
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdio.h])
+AC_C_INLINE
+AC_TYPE_SIZE_T
 AC_CHECK_HEADERS([string.h])
-AC_CHECK_HEADERS([stdlib.h])
 AC_CHECK_HEADERS([uuid.h])
 AC_CHECK_HEADERS([stdarg.h])
-AC_CHECK_HEADERS([syslog.h])
 
 PKG_CHECK_MODULES([OSSP], [ossp-uuid])
 
