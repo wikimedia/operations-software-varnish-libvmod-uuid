@@ -31,3 +31,7 @@ Makefile.in
 /src/vcc_if.c
 /src/vcc_if.h
 /src/vmod_*rst
+
+/src/test-suite.log
+/src/tests/*.log
+/src/tests/*.trs
