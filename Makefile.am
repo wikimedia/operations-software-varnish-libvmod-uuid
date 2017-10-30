@@ -1,4 +1,4 @@
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I m4 -I ${VARNISHAPI_DATAROOTDIR}/aclocal
 
 SUBDIRS = src
 
@@ -18,4 +18,3 @@ else
 	@echo "========================================"
 	@false
 endif
-

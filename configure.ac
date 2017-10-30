@@ -1,38 +1,59 @@
-AC_PREREQ(2.59)
+AC_PREREQ(2.68)
 AC_COPYRIGHT([Copyright (c) 2013 Sharecare, Inc.])
-AC_INIT([libvmod-uuid], [1.2])
+AC_INIT([libvmod-uuid], [trunk], [], [vmod-uuid])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_uuid.vcc)
+AC_CONFIG_AUX_DIR([build-aux])
 AM_CONFIG_HEADER(config.h)
 
 AC_CANONICAL_SYSTEM
 AC_LANG(C)
 
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign parallel-tests])
+AM_SILENT_RULES([yes])
+AM_PROG_AR
 
-AC_GNU_SOURCE
+#AC_GNU_SOURCE
 AC_PROG_CC
 AC_PROG_CC_STDC
-if test "x$ac_cv_prog_cc_c99" = xno; then
-	AC_MSG_ERROR([Could not find a C99 compatible compiler])
-fi
 AC_PROG_CPP
-
-AC_PROG_INSTALL
-AC_PROG_LIBTOOL
-AC_PROG_MAKE_SET
 
 AC_CHECK_LIB(ossp-uuid, uuid_create)
 
-# Check for rst utilities
-AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], "no")
-if test "x$RST2MAN" = "xno"; then
-	AC_MSG_WARN([rst2man not found - not building man pages])
-fi
-AM_CONDITIONAL(HAVE_RST2MAN, [test "x$RST2MAN" != "xno"])
+LT_PREREQ([2.2.6])
+LT_INIT([dlopen disable-static])
 
-# Check for pkg-config
-PKG_PROG_PKG_CONFIG
+AX_PTHREAD(,[AC_MSG_ERROR([Could not configure pthreads support])])
+
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
+
+AC_ARG_WITH([rst2man],
+	AS_HELP_STRING(
+		[--with-rst2man=PATH],
+		[Location of rst2man (auto)]),
+	[RST2MAN="$withval"],
+	AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], []))
+
+m4_ifndef([VARNISH_PREREQ], AC_MSG_ERROR([Need varnish.m4 -- see INSTALL.rst]))
+
+VARNISH_PREREQ([5.0.0 5.3])
+VARNISH_VMODS([uuid])
+
+VMOD_TESTS="$(cd $srcdir/src && echo tests/*.vtc)"
+AC_SUBST(VMOD_TESTS)
+
+PKG_CHECK_VAR([LIBVARNISHAPI_LIBDIR], [varnishapi], [libdir])
+AC_SUBST([VARNISH_LIBRARY_PATH],
+	[$LIBVARNISHAPI_LIBDIR:$LIBVARNISHAPI_LIBDIR/varnish])
+
+AC_CONFIG_FILES([
+	Makefile
+	src/Makefile
+])
+
+AM_CONDITIONAL(HAVE_RST2MAN, [test "x$RST2MAN" != "xno"])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -43,112 +64,37 @@ AC_CHECK_HEADERS([uuid.h])
 AC_CHECK_HEADERS([stdarg.h])
 AC_CHECK_HEADERS([syslog.h])
 
-# Check for python
-AC_CHECK_PROGS(PYTHON, [python3 python3.1 python3.2 python2.7 python2.6 python2.5 python2 python], [AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
-
-PKG_CHECK_MODULES([libvarnishapi], [varnishapi])
-PKG_CHECK_VAR([LIBVARNISHAPI_DATAROOTDIR], [varnishapi], [datarootdir])
-PKG_CHECK_VAR([LIBVARNISHAPI_BINDIR], [varnishapi], [bindir])
-PKG_CHECK_VAR([LIBVARNISHAPI_SBINDIR], [varnishapi], [sbindir])
-AC_SUBST([LIBVARNISHAPI_DATAROOTDIR])
-
-# Varnish include files tree
-VARNISH_VMOD_INCLUDES
-VARNISH_VMOD_DIR
-VARNISH_VMODTOOL
-
-AC_PATH_PROG([VARNISHTEST], [varnishtest], [],
-    [$LIBVARNISHAPI_BINDIR:$LIBVARNISHAPI_SBINDIR:$PATH])
-AC_PATH_PROG([VARNISHD], [varnishd], [],
-    [$LIBVARNISHAPI_SBINDIR:$LIBVARNISHAPI_BINDIR:$PATH])
-
 PKG_CHECK_MODULES([OSSP], [ossp-uuid])
-
-# This corresponds to FreeBSD's WARNS level 6
-DEVELOPER_CFLAGS="-Wall -Wstrict-prototypes \
--Wmissing-prototypes \
--Wpointer-arith \
--Wreturn-type \
--Wcast-qual \
--Wwrite-strings \
--Wswitch \
--Wshadow \
--Wcast-align \
--Wunused-parameter \
--Wchar-subscripts \
--Winline \
--Wnested-externs \
--Wredundant-decls -Wformat"
-
-# Additional flags for GCC 4
-EXTRA_DEVELOPER_CFLAGS="-Wextra \
--Wno-missing-field-initializers \
--Wno-sign-compare"
-
-# --enable-developer-warnings
-AC_ARG_ENABLE(developer-warnings,
-	AS_HELP_STRING([--enable-developer-warnings],
-		       [enable strict warnings (default is NO)]),
-	CFLAGS="${CFLAGS} ${DEVELOPER_CFLAGS}")
-
-# --enable-debugging-symbols
-AC_ARG_ENABLE(debugging-symbols,
-	AS_HELP_STRING([--enable-debugging-symbols],
-		       [enable debugging symbols (default is NO)]),
-	CFLAGS="${CFLAGS} -O0 -g -fno-inline")
-
-# --enable-diagnostics
-AC_ARG_ENABLE(diagnostics,
-	AS_HELP_STRING([--enable-diagnostics],
-		       [enable run-time diagnostics (default is NO)]),
-	CFLAGS="${CFLAGS} -DDIAGNOSTICS")
-
-# --enable-extra-developer-warnings
-AC_ARG_ENABLE(extra-developer-warnings,
-	AS_HELP_STRING([--enable-extra-developer-warnings],
-		       [enable even stricter warnings (default is NO)]),
-	[],
-	[enable_extra_developer_warnings=no])
-
-if test "x$enable_stack_protector" != "xno"; then
-	save_CFLAGS="$CFLAGS"
-	CFLAGS="${CFLAGS} ${EXTRA_DEVELOPER_CFLAGS}"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM([],[],[])],
-		[],
-		[AC_MSG_WARN([All of ${EXTRA_DEVELOPER_CFLAGS} not supported, disabling])
-		    CFLAGS="$save_CFLAGS"])
-fi
 
 # --enable-stack-protector
 AC_ARG_ENABLE(stack-protector,
-	AS_HELP_STRING([--enable-stack-protector],
-		       [enable stack protector (default is NO)]),
-	[],
-	[enable_stack_protector=no])
+       AS_HELP_STRING([--enable-stack-protector],[enable stack protector (default is YES)]),
+       [],
+       [enable_stack_protector=yes])
 
 if test "x$enable_stack_protector" != "xno"; then
-	save_CFLAGS="$CFLAGS"
-	CFLAGS="${CFLAGS} -fstack-protector-all"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM([],[],[])],
-		[],
-		[AC_MSG_WARN([-fstack-protector not supported, disabling])
-		    CFLAGS="$save_CFLAGS"])
+	AX_CHECK_COMPILE_FLAG([-fstack-protector],
+		AX_CHECK_LINK_FLAG([-fstack-protector],
+			[CFLAGS="${CFLAGS} -fstack-protector"], [], []),
+		[], [])
 fi
 
-# --enable-tests
-AC_ARG_ENABLE(tests,
-	AS_HELP_STRING([--enable-tests],[build test programs (default is NO)]))
-AM_CONDITIONAL([ENABLE_TESTS], [test x$enable_tests = xyes])
+# --enable-debugging
+AC_ARG_ENABLE(debugging,
+	AS_HELP_STRING([--enable-debugging],[enable debugging (default is NO)]),
+	[],
+	[enable_debugging=no])
 
-# --enable-werror
-AC_ARG_ENABLE(werror,
-	AS_HELP_STRING([--enable-werror],[use -Werror (default is NO)]),
-	CFLAGS="${CFLAGS} -Werror")
+# AC_PROG_CC sets CFLAGS to '-g -O2' unless already set, so there's no
+# need to add -g. Disable or change by explicitly setting CFLAGS. If
+# this option is enabled, then -Og or -O0 becomes the last
+# optimization option, and hence takes precedence.
+if test "x$enable_debugging" != "xno"; then
+	CFLAGS="${CFLAGS} -fno-inline"
+	AX_CHECK_COMPILE_FLAG([-Og],
+		[CFLAGS="${CFLAGS} -Og"],
+		[CFLAGS="${CFLAGS} -O0"],
+		[])
+fi
 
-AC_CONFIG_FILES([
-	Makefile
-	src/Makefile
-])
 AC_OUTPUT

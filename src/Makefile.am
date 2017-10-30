@@ -1,32 +1,41 @@
-AM_CPPFLAGS = @VMOD_INCLUDES@
+AUTOMAKE_OPTIONS = subdir-objects
 
-vmoddir = @VMOD_DIR@
+AM_CFLAGS = $(VARNISHAPI_CFLAGS) -DSTATIC_ASSERT
+AM_LDFLAGS = $(VARNISHAPI_LIBS) $(VMOD_LDFLAGS) @OSSP_LIBS@
+
 vmod_LTLIBRARIES = libvmod_uuid.la
 
-libvmod_uuid_la_LDFLAGS = -module -export-dynamic -avoid-version -shared \
-	@OSSP_LIBS@
-
 libvmod_uuid_la_SOURCES = \
-	vcc_if.c \
-	vcc_if.h \
 	vmod_uuid.c
+
+nodist_libvmod_uuid_la_SOURCES = \
+	vcc_if.c \
+	vcc_if.h
+
+vmod_uuid.lo: vcc_if.c vcc_if.h
+
+vmod_uuid.lo: $(nodist_libvmod_uuid_la_SOURCES)
 
 vcc_if.c: vcc_if.h
 
-vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_uuid.vcc
-	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_uuid.vcc
+vcc_if.h: vmod_uuid.vcc
+	$(AM_V_VMODTOOL) $(PYTHON) $(VMODTOOL) -o vcc_if $(srcdir)/vmod_uuid.vcc
 
-VMOD_TESTS = tests/*.vtc
-.PHONY: $(VMOD_TESTS)
+AM_TESTS_ENVIRONMENT = \
+	PATH="$(VMOD_TEST_PATH)" \
+	LD_LIBRARY_PATH="$(VARNISH_LIBRARY_PATH)"
+TEST_EXTENSIONS = .vtc
+VTC_LOG_COMPILER = varnishtest -v
+AM_VTC_LOG_FLAGS = -Dvmod_uuid="$(VMOD_UUID)"
 
-tests/*.vtc:
-	PATH=@LIBVARNISHAPI_SBINDIR@:$$PATH \
-	@VARNISHTEST@ -Dvmod_topbuild=$(abs_top_builddir) $@
-
-check: $(VMOD_TESTS)
+TESTS = @VMOD_TESTS@
 
 EXTRA_DIST = \
 	vmod_uuid.vcc \
 	$(VMOD_TESTS)
 
-CLEANFILES = $(builddir)/vcc_if.c $(builddir)/vcc_if.h
+CLEANFILES = \
+	$(builddir)/vcc_if.c \
+	$(builddir)/vcc_if.h \
+	$(builddir)/vmod_uuid.rst \
+	$(builddir)/vmod_uuid.man.rst

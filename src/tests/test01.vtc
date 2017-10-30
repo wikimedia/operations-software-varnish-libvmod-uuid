@@ -6,7 +6,7 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-   import uuid from "${vmod_topbuild}/src/.libs/libvmod_uuid.so";
+   import ${vmod_uuid};
 
    sub vcl_deliver {
       set resp.http.hello = "cache-" + uuid.uuid();
