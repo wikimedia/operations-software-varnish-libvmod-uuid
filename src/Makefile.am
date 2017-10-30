@@ -11,7 +11,9 @@ libvmod_uuid_la_SOURCES = \
 	vcc_if.h \
 	vmod_uuid.c
 
-vcc_if.c vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_uuid.vcc
+vcc_if.c: vcc_if.h
+
+vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_uuid.vcc
 	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_uuid.vcc
 
 VMOD_TESTS = tests/*.vtc
