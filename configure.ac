@@ -13,11 +13,6 @@ AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign parallel-tests])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
 
-#AC_GNU_SOURCE
-AC_PROG_CC
-AC_PROG_CC_STDC
-AC_PROG_CPP
-
 AC_CHECK_LIB(ossp-uuid, uuid_create)
 
 LT_PREREQ([2.2.6])
