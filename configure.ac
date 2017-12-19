@@ -4,7 +4,7 @@ AC_INIT([libvmod-uuid], [1.3], [], [vmod-uuid])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_uuid.vcc)
 AC_CONFIG_AUX_DIR([build-aux])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 AC_CANONICAL_SYSTEM
 AC_LANG(C)
