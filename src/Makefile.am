@@ -16,10 +16,13 @@ vmod_uuid.lo: vcc_if.c vcc_if.h
 
 vmod_uuid.lo: $(nodist_libvmod_uuid_la_SOURCES)
 
-vcc_if.c: vcc_if.h
+vcc_if.h: vcc_if.c
 
-vcc_if.h: vmod_uuid.vcc
+# The sed command fixes the bug concerning $ABI vrt that is addressed
+# by Varnish issue #2508.
+vcc_if.c: vmod_uuid.vcc
 	$(AM_V_VMODTOOL) $(PYTHON) $(VMODTOOL) -o vcc_if $(srcdir)/vmod_uuid.vcc
+	sed -i '/vrt_major/s/0/6/' vcc_if.c
 
 AM_TESTS_ENVIRONMENT = \
 	PATH="$(VMOD_TEST_PATH)" \
