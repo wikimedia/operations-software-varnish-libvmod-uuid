@@ -213,6 +213,8 @@ so forth.
 HISTORY
 =======
 
+* Version 1.3: compatible with Varnish 5.0.0 through 5.2.
+
 * Verison 1.2: compatible with Varnish since 5.0.0
 
 * Version 1.1: requires Varnish 4.1, creates internal UUID objects
