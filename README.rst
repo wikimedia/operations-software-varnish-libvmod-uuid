@@ -133,14 +133,9 @@ Example
 DEPENDENCIES
 ============
 
-Libvmod-uuid requires the OSSP uuid library to generate uuids.  It
-is available at http://www.ossp.org/pkg/lib/uuid/ or possibly as a
-prepackaged library from your linux distribution.
-
-In the case of Redhat/Fedora/CentOS, the rpm is named uuid.  Ensure
-you install the rpms with the following command::
-
-   yum install -y uuid uuid-devel
+Libvmod-uuid requires the OSSP uuid library to generate uuids.  It is
+available at http://www.ossp.org/pkg/lib/uuid/ or possibly as a
+prepackaged library (usually named uuid) from your linux distribution.
 
 This version of the VMOD requires Varnish since version 5.0.0, and has
 been tested against versions through 5.2.0.
@@ -148,67 +143,7 @@ been tested against versions through 5.2.0.
 INSTALLATION
 ============
 
-The installation process is standard for a Varnish VMOD -- build the
-VMOD on a system where an instance of Varnish is installed, and the
-auto-tools will attempt to locate the Varnish instance, and then pull
-in libraries and other support files from there.
-
-Quick start
------------
-
-This sequence should be enough in typical setups:
-
-1. ``./autogen.sh``  (for git-installation)
-2. ``./configure``
-3. ``make``
-4. ``make check`` (regression tests)
-5. ``make install`` (may require root: sudo make install)
-
-In your VCL you could then use this vmod along the following lines::
-        
-        import uuid;
-
-        sub vcl_recv {
-                # This sets req.http.X-Flow-ID to "cache-uuid"
-                set req.http.X-Flow-ID = "cache-" + uuid.uuid();
-        }
-
-Alternative configs
--------------------
-
-As with Varnish itself, you can set additional flags and macros in the
-``configure`` step, and/or define environment variables to affect the
-build config.
-
-For example, if you are building the VMOD against a Varnish instance
-with a non-standard installation prefix, then set these env variables
-before running ``configure``:
-
-* PREFIX=/path/to/varnish/install/prefix
-* export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
-* export ACLOCAL_PATH=$PREFIX/share/aclocal
-* export PATH=$PREFIX/bin:$PREFIX/sbin:$PATH
-
-``configure`` must locate the ``varnishtest`` and ``varnishd``
-binaries so that ``make check`` can be run. Usually it should be able
-to find them, but if necessary you can set the variables
-``VARNISHTEST`` and/or ``VARNISHD`` with the full paths.
-
-For developers
---------------
-
-As with Varnish, you can use these ``configure`` options for stricter
-compiling:
-
-* ``--enable-developer-warnings``
-* ``--enable-extra-developer-warnings`` (for GCC 4)
-* ``--enable-werror``
-
-The VMOD must always build successfully with these options enabled.
-
-Also as with Varnish, you can add ``--enable-debugging-symbols``, so
-that the VMOD's symbols are available to debuggers, in core dumps and
-so forth.
+See `INSTALL.rst <INSTALL.rst>`_ in the source repository.
 
 HISTORY
 =======
