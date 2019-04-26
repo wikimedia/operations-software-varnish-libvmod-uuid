@@ -1,0 +1,5 @@
+libvmod-uuid (1.4-1) stretch-wikimedia; urgency=low
+
+  * Initial Release (Bug: T221977).
+
+ -- Emanuele Rocca <ema@wikimedia.org>  Tue, 07 May 2019 11:32:59 +0200

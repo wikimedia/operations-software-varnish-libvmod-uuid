@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+# This has to be exported to make some magic below work.
+#export DH_OPTIONS
+
+%:
+	dh $@
+
+override_dh_autoreconf:
+	dh_autoreconf ./autogen.sh
+
+override_dh_auto_install:
+	dh_auto_install
+	rm debian/libvmod-uuid/usr/lib/*/varnish/vmods/libvmod_uuid.la
